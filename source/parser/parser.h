@@ -10,10 +10,14 @@
 static char** files;
 static unsigned int count = 0;
 
-void add_file(char* path);
-short check_syntax();
-short is_valid_file(FILE* fp);
+int file_is_exists(char* path);
 
-char** parseLine();
+void add_file(char* path);
+char* get_filename(int index);
+
+short check_syntax();
+short check_syntax_file(FILE* fp);
+
+int parse_line_args(FILE* fp, char** args);
 
 void free_parser();

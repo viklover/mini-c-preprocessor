@@ -6,23 +6,22 @@
 
 int main(int argc, char *argv[]) {
 
-    while (--argc > 0)
-        add_file(*++argv);
+    while (--argc > 0) {
 
-    Table* table = create_table();
+        if (!file_is_exists(argv[argc])) {
+            fprintf(stderr, "File with path '%s' is not exists\n", argv[argc]);
+            return 1;
+        }
 
-    short s = check_syntax();
-
-    if (s != 0) {
-
-        if (s == -1)
-            fprintf(stderr, "One of file has invalid syntax");
-
-        return 1;
+        add_file(argv[argc]);
     }
 
-    free_table(table);
-    free_parser();
+    short s;
+
+    if ((s = check_syntax()) != 0) {
+        fprintf(stderr, "-- Syntax error in file '%s'\n", get_filename(s));
+        return 1;
+    }
 
     return 0;
 }
