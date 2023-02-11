@@ -2,21 +2,27 @@
 #include <stdio.h>
 
 #include "table/table.h"
+#include "parser/parser.h"
 
-int main(char *argv[]) {
+int main(int argc, char *argv[]) {
+
+    while (--argc > 0)
+        add_file(*++argv);
 
     Table* table = create_table();
 
-    // In ASCII coding: "Hel" and "Cau" have one eqaul hash
-    put(table, "A", "B");
-    put(table, "Hel", "world");
-    put(table, "Cau", "world2");
+    short s = check_syntax();
 
-    printf("%s\n", get(table, "A"));
-    printf("%s\n", get(table, "Hel"));
-    printf("%s\n", get(table, "Cau"));
+    if (s != 0) {
+
+        if (s == -1)
+            fprintf(stderr, "One of file has invalid syntax");
+
+        return 1;
+    }
 
     free_table(table);
+    free_parser();
 
     return 0;
 }
