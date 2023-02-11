@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <string.h>
 
 #define MACRO_LEN 8
@@ -14,4 +15,5 @@ struct Instruction {
 static char* macros[] = {"define", "if", "ifndef", "else", "endif", "undef"};
 static char* operators[] = {"+", "-", "*", "=="};
 
-int macros_is_exists(char* macros);
+int macro_is_exists(char* input);
+int is_valid_macro(int macro, int argc, char** args);

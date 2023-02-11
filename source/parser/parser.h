@@ -21,3 +21,34 @@ short check_syntax_file(FILE* fp);
 int parse_line_args(FILE* fp, char** args);
 
 void free_parser();
+
+/*
+
+while (i < MAX_ARG_LEN && line[i] != 0) {
+
+    if (line[i] != ' ' && line[i] != '\t' && line[i] != '\n') {
+
+        if (line[i] == '"')
+            in_quotes = (in_quotes ? 0 : 1);
+
+        if (!is_argument) {
+            args[l] = malloc(MAX_ARG_LEN * sizeof(char));
+            is_argument = 1;
+            j = i;
+        }
+    }
+    else if (is_argument && !in_quotes) {
+        is_argument = 0;
+        k = i;
+        
+        strncpy(args[l], line + j, k - j);
+        args[l][k - j] = '\0';
+
+        printf("arg: %s", args[l]);
+
+        l++;
+    }
+    
+    i++;
+}
+*/

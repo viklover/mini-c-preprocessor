@@ -16,10 +16,10 @@ int main(int argc, char *argv[]) {
         add_file(argv[argc]);
     }
 
-    short s;
+    short file;
 
-    if ((s = check_syntax()) != 0) {
-        fprintf(stderr, "-- Syntax error in file '%s'\n", get_filename(s));
+    if ((file = check_syntax()) != 0) {
+        fprintf(stderr, "╚══ Syntax error in file '%s'\n", get_filename(file - 1));
         return 1;
     }
 

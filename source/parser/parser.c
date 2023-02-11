@@ -60,6 +60,7 @@ short check_syntax_file(FILE* fp) {
 
     while (fgets(line, MAX_LINE_LEN, fp) != 0 && ++current_line) {
         
+        // FINDING MACRO AND EXSITING CHECKING
         i = 0; j = 0; k = 0;
 
         while (i < MAX_LINE_LEN && line[i] != '#' && line[i] != 0) 
@@ -75,61 +76,76 @@ short check_syntax_file(FILE* fp) {
         if (j - k == 0)
             continue;
 
-        char* macros = malloc(MACRO_LEN * sizeof(char));
+        char* macro = malloc(MACRO_LEN * sizeof(char));
         
-        strncpy(macros, line + j + 1, k - j - 1);
+        strncpy(macro, line + j + 1, k - j - 1);
 
-        macros[k - j - 1] = '\0';
+        macro[k - j - 1] = '\0';
 
-        if (macros_is_exists(macros) == -1) {
-            fprintf(stderr, "%d line: macros '%s' is not exists\n", current_line, macros);
+        int current_macro = -1;
+
+        if ((current_macro = macro_is_exists(macro)) == -1) {
+            fprintf(stderr, "╔ %d line: macro '%s' is not exists\n", current_line, macro);
+            return -1;
+        }
+
+        // PARSING ARGUMENTS AND VALIDATING
+        char** args = malloc(MAX_ARG_N * sizeof(char*));
+
+        for (int p = 0; p < MAX_ARG_N; ++p)
+            args[p] = 0;
+
+        int in_quotes;
+        int l = 0;
+
+        while (i < MAX_ARG_LEN && line[i] != 0) {
+
+            in_quotes = 0;
+            j = 0; k = 0;
+
+            while (line[i] == ' ' || line[i] == '\t')
+                ++i;
+
+            j = i;
+
+            if (line[i] == '"') {
+
+                ++i;
+
+                while (line[i] != '"' && line[i] != 0 && line[i] < MAX_ARG_LEN)
+                    ++i;
+
+                if (line[i] == 0) {
+                    fprintf(stderr, "╔ %d line: quotes are not closed\n", current_line);
+                    return -1;
+                }
+                
+                ++i;
+            } 
+            else {
+
+                while (line[i] != ' ' && line[i] != 0 && line[i] < MAX_ARG_LEN)
+                    ++i;
+            }
+
+            k = i;
+
+            if (k - j == 1 && (line[j] == ' ' || line[j] == 10))
+                continue;
+            
+            args[l] = malloc((k - j) * sizeof(char) + 1);
+            args[l][k - j] = '\0';
+
+            strncpy(args[l], line + j, k - j);
+
+            l++;
+        }
+
+        if (is_valid_macro(current_macro, l, args) != 0) {
+            fprintf(stderr, "╠ %d line: macro has invalid parameters\n", current_line);
             return -1;
         }
     }
-
-    // // COUTN ARGUMENTS WITH PUTTING ARGUMENTS BOUND INDEXES
-    // int args_count = 0; 
-    // int is_argument = 0;
-    // int in_quotes = 0;
-    // int index = 0;
-
-    // i = 0; j = 0;
-
-    // while (i < MAX_LINE_LEN && line[i] != 0) {
-        
-    //     if (line[i] != ' ' && line[i] != '\t' && line[i] != '\n') {
-
-    //         if (line[i] == '"') {
-    //             in_quotes = (in_quotes ? 0 : 1);
-    //         }
-
-    //         if (!is_argument) {
-    //             words[index][0] = i;
-    //             is_argument = 1;
-    //             args_count++;
-    //         }
-    //     } 
-    //     else if (is_argument && !in_quotes) {
-    //         words[index][1] = i;
-    //         index++;
-    //         is_argument = 0;
-    //     }
-
-    //     ++i;
-    // }
-
-    // if (is_argument && line[i] == 0 && !in_quotes) {
-    //     words[index][1] = i;
-    // }
-
-    // if (!args_count)
-    //     return 1;
-
-    // if (in_quotes)
-    //     return 2; 
-
-    // for (i = 0; i < MAX_ARG_N && words[i][0] != -1; ++i)
-    //     printf("argument: %d:%d\n", words[i][0], words[i][1]);
 
     return 0;
 }
