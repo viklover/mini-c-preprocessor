@@ -130,19 +130,28 @@ short check_syntax_file(FILE* fp) {
 
             k = i;
 
-            if (k - j == 1 && (line[j] == ' ' || line[j] == 10))
+            if ((k - j == 1 && (line[j] == ' ' || line[j] == 10)) || k == j)
                 continue;
-            
-            args[l] = malloc((k - j) * sizeof(char) + 1);
-            args[l][k - j] = '\0';
 
+            args[l] = malloc((k - j) * sizeof(char) + 1);
             strncpy(args[l], line + j, k - j);
+
+            if (line[i] == 0) {
+
+                if (line[i - 1] != 0)
+                    args[l][k - j - 2] = '\0';
+                else
+                    args[l][k - j - 1] = '\0';
+            }
+            else {
+                args[l][k - j] = '\0';
+            }
 
             l++;
         }
 
         if (is_valid_macro(current_macro, l, args) != 0) {
-            fprintf(stderr, "╠ %d line: macro has invalid parameters\n", current_line);
+            fprintf(stderr, "╠ %d line: macro has invalid arguments\n", current_line);
             return -1;
         }
     }
