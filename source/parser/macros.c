@@ -1,7 +1,7 @@
 
 #include "macros.h"
 
-int macro_is_exists(char* input) {
+int macro_index(char* input) {
     
     for (int i = 0; i < MACRO_N; ++i) {
 
@@ -55,6 +55,11 @@ int is_valid_macro(int macro, int argc, char** args) {
                 }
             }
 
+        }
+
+        if (argc % 2 != 0) {
+            fprintf(stderr, "╔ %s: '%s' with what? i don't see anything after it operator \n", macros[macro], args[argc-1]);
+            return -1;
         }
     } 
 
@@ -111,7 +116,7 @@ int is_valid_macro(int macro, int argc, char** args) {
     else if (macro == 3) {
 
         if (argc > 0) {
-            fprintf(stderr, "╔ %s: '%s' - do you joke? this is 'else' branch. delete it\n", macros[macro], args[1]);
+            fprintf(stderr, "╔ %s: '%s' - do you joke? this is 'else' branch. delete it\n", macros[macro], args[0]);
             return -1;
         }
 
@@ -146,6 +151,133 @@ int is_valid_macro(int macro, int argc, char** args) {
     }
 
     return 0;
+}
+
+
+short execute(Table* table, Instruction* instruction, int* level) {
+
+    if (instruction->macros == 0) {
+
+        char* variable = instruction->args[0];
+
+        if (instruction->argc == 2) {
+            put(table, variable, instruction->args[1]);
+        } 
+        else {
+            
+            char* value1 = malloc(STACK_VALUE * sizeof(char));
+            char* value2 = malloc(STACK_VALUE * sizeof(char));
+
+            if (get_value(instruction, 1, value1, table) == -1 ||
+                get_value(instruction, 3, value2, table) == -1)
+                return -1;
+
+            char* stack = malloc(STACK_LEN * sizeof(char));
+            operate(instruction->args[2], stack, value1, value2);
+
+            for (int i = 4; i < instruction->argc - 1; i += 2) {
+
+                strcpy(value1, stack);
+
+                if (get_value(instruction, i+1, value2, table) == -1)
+                    return -1;
+                
+                operate(instruction->args[i], stack, value1, value2);
+            }
+
+            put(table, variable, stack);
+        }   
+    }
+
+    return 0;
+}
+
+int get_value(Instruction* instruction, int arg_index, char* dest, Table* table) {
+
+    if (is_variable(instruction->args[arg_index]) == 0) {
+
+        char* ptr;
+
+        if ((ptr = get(table, instruction->args[arg_index])) == 0) {
+            fprintf(stderr, "╔ %s: '%s' is not defined\n", macros[instruction->macros], instruction->args[arg_index]);
+            return -1;
+        }
+
+        strcpy(dest, ptr);
+    } 
+    else {
+        strcpy(dest, instruction->args[arg_index]);
+    }
+
+    return 0;
+}
+
+
+int operate(char* operator, char* result, char* value1, char* value2) {
+
+    if (strcmp(operator, "+") == 0) {
+        return sum(result, value1, value2);
+    } 
+    else if (strcmp(operator, "-") == 0) {
+        return minus(result, value1, value2);
+    }
+    else if (strcmp(operator, "*") == 0) {
+        return multiply(result, value1, value2);
+    }
+    // else if (strcmp(operator, "==") == 0) {
+    //     return operate(result, value1, value2);
+    // }
+
+    return -1;
+}
+
+
+int sum(char* result, char* value1, char* value2) {
+
+    int sum;
+
+    if (is_number(value1) == 0 && is_number(value2) == 0) {
+        sum = atoi(value1) + atoi(value2);
+
+        char* ptr = itoa(sum, result, 10);
+        strcpy(result, ptr);
+    }
+}
+
+int minus(char* result, char* value1, char* value2) {
+
+    int minus;
+
+    if (is_number(value1) == 0 && is_number(value2) == 0) {
+        minus = atoi(value1) - atoi(value2);
+
+        char* ptr = itoa(minus, result, 10);
+        strcpy(result, ptr);
+    }
+}
+
+int multiply(char* result, char* value1, char* value2) {
+
+    int multiply;
+
+    if (is_number(value1) == 0 && is_number(value2) == 0) {
+        multiply = atoi(value1) * atoi(value2);
+
+        char* ptr = itoa(multiply, result, 10);
+        strcpy(result, ptr);
+    }
+}
+
+
+Instruction* create_instruction(int macro, int argc, char** args) {
+
+    Instruction* instruction = malloc(sizeof(Instruction));
+    
+    instruction->macros = macro;
+    instruction->args = args;
+    instruction->argc = argc;
+
+    return instruction;
 }
 
 

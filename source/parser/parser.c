@@ -1,5 +1,4 @@
 
-#include "parser.h"
 #include "macros.h"
 
 int file_is_exists(char* path) {
@@ -84,7 +83,7 @@ short check_syntax_file(FILE* fp) {
 
         int current_macro = -1;
 
-        if ((current_macro = macro_is_exists(macro)) == -1) {
+        if ((current_macro = macro_index(macro)) == -1) {
             fprintf(stderr, "╔ %d line: macro '%s' is not exists\n", current_line, macro);
             return -1;
         }
@@ -138,14 +137,19 @@ short check_syntax_file(FILE* fp) {
 
             if (line[i] == 0) {
 
-                if (line[i - 1] != 0)
-                    args[l][k - j - 2] = '\0';
-                else
+                if (line[i - 1] == 10)
                     args[l][k - j - 1] = '\0';
+                else
+                    args[l][k - j - 2] = '\0';
             }
             else {
                 args[l][k - j] = '\0';
             }
+
+            // for (int m = 0; m < i + 1; ++m)
+            //     printf("|%d|", line[m]);
+
+            // printf("\n");
 
             l++;
         }
@@ -160,76 +164,156 @@ short check_syntax_file(FILE* fp) {
 }
 
 
-int parse_line_args(FILE* fp, char** args) {
+short run(Table* table) {
 
-    char* line = malloc(MAX_LINE_LEN * sizeof(char));
+    Instruction** instructions = malloc(INSTRUCTIONS_N * sizeof(Instruction*));
     
-    if (fgets(line, MAX_LINE_LEN, fp) == NULL)
-        return -1;
+    int instructions_num = 0;
+    
+    for (int i = 0; i < INSTRUCTIONS_N; ++i)
+        instructions[i] = NULL;
 
-    // printf("%s", line);
 
-    // PREPARE WORDS ARRAY FOR INDEXES STORING
-    int** words = malloc(MAX_ARG_N * sizeof(int*));
+    char** ptr = files;
+    int k = count;
 
-    int i, j;
+    FILE* fp;
 
-    for (i = 0; i < MAX_ARG_N; ++i) {
-        words[i] = malloc(2 * sizeof(int));
-
-        for (j = 0; j < 2; ++j)
-            words[i][j] = -1;
-    }
-
-    // SKIP SPACES OR TABS IN BEGGINING OF LINE
-    while (i < MAX_LINE_LEN && line[i] != '#') 
-        i++;
-
-    // COUTN ARGUMENTS WITH PUTTING ARGUMENTS BOUND INDEXES
-    int args_count = 0; 
-    int is_argument = 0;
-    int in_quotes = 0;
-    int index = 0;
-
-    i = 0; j = 0;
-
-    while (i < MAX_LINE_LEN && line[i] != 0) {
+    while (--k >= 0) {
         
-        if (line[i] != ' ' && line[i] != '\t' && line[i] != '\n') {
+        fp = fopen(*(ptr++), "r");
 
-            if (line[i] == '"') {
-                in_quotes = (in_quotes ? 0 : 1);
+        int i, j, k;
+
+        int current_line = 0;
+        char* line = malloc(MAX_LINE_LEN * sizeof(char));
+
+        while (fgets(line, MAX_LINE_LEN, fp) != 0 && ++current_line) {
+            
+            i = 0; j = 0;
+
+            // PARSING MACRO
+            short macro;
+
+            if ((macro = parse_macro(line, &i, &j)) == -1) {
+                continue;
             }
 
-            if (!is_argument) {
-                words[index][0] = i;
-                is_argument = 1;
-                args_count++;
+            // PARSING ARGUMENTS
+            char** args = malloc(MAX_ARG_N * sizeof(char*));
+            int argc;
+
+            if ((argc = parsing_args(args, line, &i, &j)) == -1) {
+                continue;
             }
-        } 
-        else if (is_argument && !in_quotes) {
-            words[index][1] = i;
-            index++;
-            is_argument = 0;
+
+            Instruction* instruction = create_instruction(macro, argc, args);
+            instructions[instructions_num++] = instruction;
         }
 
-        ++i;
+        fclose(fp);
     }
 
-    if (is_argument && line[i] == 0 && !in_quotes) {
-        words[index][1] = i;
+    int level = 0;
+
+    for (int i = 0, status; i < instructions_num; ++i) {
+        
+        if ((status = execute(table, instructions[i], &level)) == -1) {
+            fprintf(stderr, "╠ '%s' macros\n", macros[instructions[i]->macros]);
+            return -1;
+        }
     }
-
-    if (!args_count)
-        return 1;
-
-    if (in_quotes)
-        return 2; 
-
-    // for (i = 0; i < MAX_ARG_N && words[i][0] != -1; ++i)
-    //     printf("argument: %d:%d\n", words[i][0], words[i][1]);
 
     return 0;
+}
+
+
+int parse_macro(char* line, int* i, int* j) {
+
+    int k = 0;
+
+    while (*i < MAX_LINE_LEN && line[*i] != '#' && line[*i] != 0) 
+        (*i)++;
+
+    *j = *i;
+
+    while (*i < MAX_LINE_LEN && line[*i] != ' ' && line[*i] != '\n' && line[*i] != 0)
+        (*i)++;
+    
+    k = *i;
+
+    if ((*j - k) == 0)
+        return -1;
+
+    char* macro = malloc(MACRO_LEN * sizeof(char));
+    strncpy(macro, line + *j + 1, k - *j - 1);
+
+    macro[k - *j - 1] = '\0';
+
+    return macro_index(macro);
+}
+
+int parsing_args(char** args, char* line, int* i, int* j) {
+
+    for (int p = 0; p < MAX_ARG_N; ++p)
+        args[p] = 0;
+
+    int in_quotes;
+    int l = 0, k = 0;
+
+    while (*i < MAX_ARG_LEN && line[*i] != 0) {
+
+        in_quotes = 0;
+        k = 0;
+        *j = 0; 
+
+        while (line[*i] == ' ' || line[*i] == '\t')
+            ++(*i);
+
+        *j = *i;
+
+        if (line[*i] == '"') {
+
+            ++(*i);
+
+            while (line[*i] != '"' && line[*i] != 0 && line[*i] < MAX_ARG_LEN)
+                ++(*i);
+            
+            ++(*i);
+        } 
+        else {
+
+            while (line[*i] != ' ' && line[*i] != 0 && line[*i] < MAX_ARG_LEN)
+                ++(*i);
+        }
+
+        k = *i;
+
+        if ((k - *j == 1 && (line[*j] == ' ' || line[*j] == 10)) || k == *j)
+            continue;
+
+        args[l] = malloc((k - *j) * sizeof(char) + 1);
+        strncpy(args[l], line + *j, k - *j);
+
+        if (line[*i] == 0) {
+
+            if (line[*i - 1] == 10)
+                args[l][k - *j - 1] = '\0';
+
+            else if (line[*i - 2] == '"')
+                args[l][k - *j] = '\0';
+            
+            else
+                args[l][k - *j - 2] = '\0';
+        }
+        else {
+            args[l][k - *j] = '\0';
+        }
+
+        l++;
+    }
+
+    return l;
 }
 
 void free_parser() {

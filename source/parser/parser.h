@@ -1,7 +1,11 @@
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../table/table.h"
+#include "macros.h"
 
 #define MAX_ARG_LEN 128
 #define MAX_ARG_N 64
@@ -18,37 +22,11 @@ char* get_filename(int index);
 short check_syntax();
 short check_syntax_file(FILE* fp);
 
-int parse_line_args(FILE* fp, char** args);
+short run(Table* table);
+
+void print(Table* table);
+
+int parse_macro(char* line, int* i, int* j);
+int parsing_args(char** args, char* line, int* i, int* j);
 
 void free_parser();
-
-/*
-
-while (i < MAX_ARG_LEN && line[i] != 0) {
-
-    if (line[i] != ' ' && line[i] != '\t' && line[i] != '\n') {
-
-        if (line[i] == '"')
-            in_quotes = (in_quotes ? 0 : 1);
-
-        if (!is_argument) {
-            args[l] = malloc(MAX_ARG_LEN * sizeof(char));
-            is_argument = 1;
-            j = i;
-        }
-    }
-    else if (is_argument && !in_quotes) {
-        is_argument = 0;
-        k = i;
-        
-        strncpy(args[l], line + j, k - j);
-        args[l][k - j] = '\0';
-
-        printf("arg: %s", args[l]);
-
-        l++;
-    }
-    
-    i++;
-}
-*/
