@@ -6,17 +6,10 @@
 
 int main(int argc, char *argv[]) {
 
-    while (--argc > 0) {
+    int files_exist, file, status;
 
-        if (!file_is_exists(argv[argc])) {
-            fprintf(stderr, "File with path '%s' is not exists\n", argv[argc]);
-            return 1;
-        }
-
-        add_file(argv[argc]);
-    }
-
-    short file, status;
+    if ((files_exist = add_files(argc, argv) != 0))
+        return files_exist;
 
     if ((file = check_syntax()) != 0) {
         fprintf(stderr, "╚══ Syntax error in file '%s'\n", get_filename(file - 1));
@@ -30,7 +23,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // print(table);
+    print(table);
 
     return 0;
 }

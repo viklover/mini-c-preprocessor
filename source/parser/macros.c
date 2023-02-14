@@ -156,7 +156,8 @@ int is_valid_macro(int macro, int argc, char** args) {
 
 short execute(Table* table, Instruction* instruction, int* level) {
 
-    if (instruction->macros == 0) {
+    // define
+    if (instruction->macros == 0 && *level >= 0) {
 
         char* variable = instruction->args[0];
 
@@ -187,6 +188,56 @@ short execute(Table* table, Instruction* instruction, int* level) {
 
             put(table, variable, stack);
         }   
+    }
+    // if
+    else if (instruction->macros == 1) {
+
+        char* value1 = malloc(STACK_VALUE * sizeof(char));
+        char* value2 = malloc(STACK_VALUE * sizeof(char));
+
+        if (get_value(instruction, 0, value1, table) == -1 ||
+            get_value(instruction, 2, value2, table) == -1)
+            return -1;
+
+        if (strcmp(value1, value2) == 0) {
+            *level = 1;
+        } else {
+            *level = -1;
+        }
+    }
+    // else
+    else if (instruction->macros == 3) {
+        
+        if (*level > 0) {
+            *level = -1;
+        }
+        else if (*level < 0) {
+            *level = 1;
+        }
+    }
+    // endif
+    else if (instruction->macros == 4) {
+        *level = 0;
+    }
+    // undef
+    else if (instruction->macros == 5 && *level >= 0) {
+        
+        char* value1 = malloc(STACK_VALUE * sizeof(char));
+
+        if (get_value(instruction, 0, value1, table) == -1) {
+            return -1;
+        }
+
+        delete(table, instruction->args[0]);
+    }
+    // ifndef
+    else if (instruction->macros == 2) {
+        
+        if (get(table, instruction->args[0]) == 0) {
+            *level = 1;
+        } else {
+            *level = -1;
+        }
     }
 
     return 0;
@@ -224,9 +275,6 @@ int operate(char* operator, char* result, char* value1, char* value2) {
     else if (strcmp(operator, "*") == 0) {
         return multiply(result, value1, value2);
     }
-    // else if (strcmp(operator, "==") == 0) {
-    //     return operate(result, value1, value2);
-    // }
 
     return -1;
 }

@@ -25,6 +25,23 @@ void add_file(char* path) {
     files = new_files;
 }
 
+int add_files(int argc, char* argv[]) {
+
+    int i = -1;
+
+    while (++i < argc) {
+
+        if (!file_is_exists(argv[i])) {
+            fprintf(stderr, "File with path '%s' is not exists\n", argv[i]);
+            return 1;
+        }
+
+        add_file(argv[i]);
+    }
+
+    return 0;
+}
+
 char* get_filename(int index) {
     return files[index];
 }
@@ -135,21 +152,20 @@ short check_syntax_file(FILE* fp) {
             args[l] = malloc((k - j) * sizeof(char) + 1);
             strncpy(args[l], line + j, k - j);
 
-            if (line[i] == 0) {
+             if (line[i] == 0) {
 
                 if (line[i - 1] == 10)
                     args[l][k - j - 1] = '\0';
+
+                else if (line[i - 2] == '"' || line[i - 1] == '"')
+                    args[l][k - j] = '\0';
+                
                 else
                     args[l][k - j - 2] = '\0';
             }
             else {
                 args[l][k - j] = '\0';
             }
-
-            // for (int m = 0; m < i + 1; ++m)
-            //     printf("|%d|", line[m]);
-
-            // printf("\n");
 
             l++;
         }
@@ -227,7 +243,6 @@ short run(Table* table) {
     return 0;
 }
 
-
 int parse_macro(char* line, int* i, int* j) {
 
     int k = 0;
@@ -300,7 +315,7 @@ int parsing_args(char** args, char* line, int* i, int* j) {
             if (line[*i - 1] == 10)
                 args[l][k - *j - 1] = '\0';
 
-            else if (line[*i - 2] == '"')
+            else if (line[*i - 2] == '"' || line[*i - 1] == '"')
                 args[l][k - *j] = '\0';
             
             else
@@ -315,6 +330,7 @@ int parsing_args(char** args, char* line, int* i, int* j) {
 
     return l;
 }
+
 
 void free_parser() {
 

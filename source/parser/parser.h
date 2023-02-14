@@ -17,6 +17,7 @@ static unsigned int count = 0;
 int file_is_exists(char* path);
 
 void add_file(char* path);
+int add_files(int argc, char* argv[]);
 char* get_filename(int index);
 
 short check_syntax();

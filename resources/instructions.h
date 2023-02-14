@@ -1,5 +1,5 @@
-#define a 2
-#define b 6
+#define a krk + 5
+#define b 128
 
 #if a == b
     #define c a + b + 2
