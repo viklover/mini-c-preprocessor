@@ -1,4 +1,4 @@
-#define a krk + 5
+#define a kek + 5
 #define b 128
 
 #if a == b
