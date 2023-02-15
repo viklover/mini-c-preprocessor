@@ -27,7 +27,7 @@ void add_file(char* path) {
 
 int add_files(int argc, char* argv[]) {
 
-    int i = -1;
+    int i = 0;
 
     while (++i < argc) {
 

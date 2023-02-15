@@ -11,7 +11,7 @@
 #include "util.h"
 
 #define MACRO_LEN 8
-#define MACRO_N 6
+#define MACRO_N 7
 
 #define OPERATOR_N 6
 #define MATH_OPERATOR_N 3
@@ -42,7 +42,7 @@ int get_value(Instruction* instruction, int arg_index, char* dest, Table* table)
 
 int operate(char* operator, char* result, char* value1, char* value2);
 
-static char* macros[] = {"define", "if", "ifndef", "else", "endif", "undef"};
+static char* macros[] = {"define", "if", "ifndef", "else", "endif", "undef", "elif"};
 static char* operators[] = {"+", "-", "*", "=="};
 static char* math_operators[] = {"+", "-", "*"};
 static char* logic_operators[] = {"=="};

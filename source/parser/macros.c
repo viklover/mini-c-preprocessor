@@ -66,8 +66,8 @@ int is_valid_macro(int macro, int argc, char** args) {
     // if
     else if (macro == 1) {
 
-        if (argc != 1 && argc != 3) {
-            fprintf(stderr, "╔ %s: expected one or three arguments\n", macros[macro]);
+        if (argc != 3) {
+            fprintf(stderr, "╔ %s: expected three arguments\n", macros[macro]);
             return -1;
         }
 
@@ -108,6 +108,35 @@ int is_valid_macro(int macro, int argc, char** args) {
         if (is_variable(args[0]) == -1) {
             fprintf(stderr, "╔ %s: '%s' - i expect variable here\n", macros[macro], args[0]);
             return -1;
+        }
+
+    }
+
+    // else if
+    else if (macro == 6) {
+
+        if (argc != 3) {
+            fprintf(stderr, "╔ %s: expected three arguments\n", macros[macro]);
+            return -1;
+        }
+
+        for (int i = 1; i < argc; ++i) {
+
+            if (i % 2 != 0) {
+
+                if (is_logic_operator(args[i]) == -1) {
+                    fprintf(stderr, "╔ %s: '%s' - no, i expect a logical operator here\n", macros[macro], args[i]);
+                    return -1;
+                }
+
+            } else {
+
+                if (is_variable(args[i]) == -1 && is_number(args[i]) == -1 && is_string(args[i]) == -1) {
+                    fprintf(stderr, "╔ %s: '%s' - no, i expect variable, string or number here\n", macros[macro], args[i]);
+                    return -1;
+                }
+            }
+
         }
 
     }
@@ -205,13 +234,34 @@ short execute(Table* table, Instruction* instruction, int* level) {
             *level = -1;
         }
     }
+    // elif
+    else if (instruction->macros == 6) {
+
+        if (*level == -1) {
+
+            char* value1 = malloc(STACK_VALUE * sizeof(char));
+            char* value2 = malloc(STACK_VALUE * sizeof(char));
+
+            if (get_value(instruction, 0, value1, table) == -1 ||
+                get_value(instruction, 2, value2, table) == -1)
+                return -1;
+
+            if (strcmp(value1, value2) == 0) {
+                *level = 1;
+            }
+        } 
+        else if (*level == 1) {
+            *level = -2;
+        }
+
+    }
     // else
     else if (instruction->macros == 3) {
         
         if (*level > 0) {
             *level = -1;
         }
-        else if (*level < 0) {
+        else if (*level < 0 && *level != -2) {
             *level = 1;
         }
     }
