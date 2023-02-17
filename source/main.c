@@ -3,6 +3,11 @@
 
 #include "table/table.h"
 #include "parser/parser.h"
+#include "output/output.h"
+
+void print_console(void *ctx, const char *macro_name, const char *macro_val) {
+    printf("# %s\n%s\n\n", macro_name, macro_val);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -23,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    print(table);
+    print_table(table, print_console);
 
     return 0;
 }
